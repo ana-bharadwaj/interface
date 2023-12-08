@@ -1,0 +1,118 @@
+/* src/pages/Home.css */
+.logo {
+  position: fixed;
+  top: 10px;
+  left: -10px;
+  width: 200px; /* Adjust the width of the logo */
+  height: auto; /* Maintain aspect ratio */
+}
+
+.heading {
+  font-size: 3em; /* Increase the font size */
+  margin-top: 30px;
+  font-family: 'Arial', sans-serif; /* Use a different font if needed */
+  letter-spacing: 2px; 
+  left: 50%;
+  transform: translateX(+40%);/* Add letter spacing */
+}
+
+.box-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: 70%; 
+  margin-top: 250px;/* Adjust the height of the box container */
+}
+
+.box {
+  width: 350px; /* Increase the width of the boxes */
+  height: 350px; /* Increase the height of the boxes */
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  padding: 20px;
+  cursor: pointer;
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 10px;
+  margin: 10px;
+  transition: all 0.3s ease-in-out;
+  transform: scale(1);
+}
+
+.box:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+/* Sliding Diagonals Background Effect Styles */
+html {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+.bg {
+  animation: slide 3s ease-in-out infinite alternate;
+  background-image: linear-gradient(-60deg, #6c3 50%, #09f 50%);
+  bottom: 0;
+  left: -50%;
+  opacity: 0.5;
+  position: fixed;
+  right: -50%;
+  top: 0;
+  z-index: -1;
+}
+
+.bg2 {
+  animation-direction: alternate-reverse;
+  animation-duration: 4s;
+}
+
+.bg3 {
+  animation-duration: 5s;
+}
+
+/*.content {
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 0.25em;
+  box-shadow: 0 0 0.25em rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+  left: 50%;
+  padding: 10vmin;
+  position: fixed;
+  text-align: center;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}*/
+
+
+h1 {
+  font-family: monospace;
+}
+
+@keyframes slide {
+  0% {
+    transform: translateX(-25%);
+  }
+  100% {
+    transform: translateX(25%);
+  }
+}
+/*Add or modify styles for buttons inside the CNV box */
+.box button {
+  background-color: transparent;
+  border: 2px solid #fff; 
+  color: #fff; 
+  padding: 10px 15px; 
+  font-size: 16px; 
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+
+.box button:hover {
+  background-color: #fff; 
+  color: #000; 
+}
+
+

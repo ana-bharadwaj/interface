@@ -1,0 +1,39 @@
+/* src/pages/Home.css */
+body {
+  margin: 0;
+  font-family: 'Arial', sans-serif;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 35px;
+  background: rgba(0, 0, 0, 0.5); /* Set a semi-transparent black background */
+  backdrop-filter: blur(10px); /* Apply a blur effect */
+  color: #fff;
+  border-radius: 20px; /* Add border-radius for curved corners */
+  border: 2px solid #000; /* Add a black border */
+  width: 80%; /* Increase the width of the header */
+  margin: 20px auto; /* Center the header on the page */
+}
+
+.logo {
+  width: 10%; /* Adjust the width of the logo */
+  height: auto;
+}
+
+.heading {
+  font-size: 1.5em;
+  margin: 0;
+  flex-grow: 0.5;
+  text-align: center;
+}
+
+header a {
+  color: #fff;
+  text-decoration: none;
+  margin-left: 20px;
+}
+
+/* Add additional styling as needed */
