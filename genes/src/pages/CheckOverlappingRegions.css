@@ -1,0 +1,70 @@
+.App {
+  text-align: center;
+  padding: 20px;
+}
+
+.form-container {
+  margin-bottom: 20px;
+}
+
+label {
+  margin-right: 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  border: 1px solid #dddddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.table-box {
+  margin-bottom: 20px;
+}
+
+.response-container {
+  margin-top: 20px;
+  position: relative; 
+}
+
+.table-container.horizontal-scroll {
+  overflow-x: auto;
+  white-space: nowrap;
+  position: relative;
+}
+.pagination {
+  margin-top: 10px;
+}
+
+button {
+  cursor: pointer;
+  padding: 5px 10px;
+  margin: 0 5px;
+}
+
+
+.download-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 12px;
+  font-size: 16px;
+}
+
+
+.download-button::before {
+  content: '\2193'; 
+  margin-right: 5px;
+}

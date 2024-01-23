@@ -1,0 +1,16 @@
+.selected-collection {
+  background-color: #c1503c; /* Change the background color to your preference */
+}
+
+.dropzone {
+  border: 2px dashed #ccc;
+  border-radius: 4px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.dropzone.active {
+  border-color: #2185d0;
+}
