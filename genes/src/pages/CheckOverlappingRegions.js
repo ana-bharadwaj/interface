@@ -9,7 +9,7 @@ function CheckOverlappingRegions() {
   const [duplicationDeletion, setDuplicationDeletion] = useState('');
   const [serverResponse, setServerResponse] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
-  const samplesPerPage = 9; // Maximum samples per table
+  const samplesPerPage = 10; // Maximum samples per table
 
   const flattenNested = (obj, prefix = '') => {
     let flat = {};

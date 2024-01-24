@@ -88,11 +88,11 @@ def process_data():
 
             for document in collection.find():
                 position = int(document.get("Position", 0))
-                end = int(document["INFO"].get("END", 0))
+                end = int(document.get("INFO",{}).get("END", 0))
                 chr_value = str(document.get("Chromosome", ""))
                 alt = document.get("ALT", "")
-                GeneList = document["FORMAT"].get("GeneList", "")
-                CriticalGeneList = document["FORMAT"].get("CriticalGeneList", "")
+                GeneList = document.get("FORMAT",{}).get("GeneList", "")
+                CriticalGeneList = document.get("FORMAT",{}).get("CriticalGeneList", "")
 
                 if CriticalGeneList and GeneList is not None:
                     if Lower <= position < Upper and Lower < end <= Upper and C == chr_value:
@@ -287,7 +287,7 @@ def get_matched_data():
                 row_data.update({f"{key}": value for key, value in document.items()})
                 matched_data.append(row_data)
             
-            elif A >= position and B <= end and C == chr:
+            elif A >= position and B  is not None and end is not None and B <= end and C == chr:
                 row_data = {
                                 "document_id": str(document.pop('_id', None)),
                                 "collection_name": collection_name,
@@ -301,7 +301,7 @@ def get_matched_data():
                             }
                 row_data.update({f"{key}": value for key, value in document.items()})
                 matched_data.append(row_data)
-            elif A > position and B > end and end > A and C == chr:
+            elif A is not None and position is not None and B is not None and end is not None and A > position and B > end and end > A and C == chr:
                 row_data = {
                                 "document_id": str(document.pop('_id', None)),
                                 "collection_name": collection_name,
@@ -326,8 +326,8 @@ def check_overlapping():
         total_matched_documents = 0
         result_data = []
 
-        for collection_name in db.list_collection_names():
-            collection = db[collection_name]
+        for collection_name in db2.list_collection_names():
+            collection = db2[collection_name]
 
             # Query the collection for documents matching the user input in the 'Region' field
             query = {"Region": user_input}
