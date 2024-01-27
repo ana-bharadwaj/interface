@@ -9,7 +9,9 @@ function CheckOverlappingRegions() {
   const [duplicationDeletion, setDuplicationDeletion] = useState('');
   const [serverResponse, setServerResponse] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
-  const samplesPerPage = 10; // Maximum samples per table
+  const samplesPerPage = 5; // Maximum samples per table
+  const [graphUrl, setGraphUrl] = useState(null);  // To store the URL of the graph image
+  const [showModal, setShowModal] = useState(false);
 
   const flattenNested = (obj, prefix = '') => {
     let flat = {};
@@ -48,9 +50,43 @@ function CheckOverlappingRegions() {
     }
   };
 
+  const handleGenerateGraph = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/get_matched_data_graph', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ start, end, chromosome, duplication_deletion: duplicationDeletion }),
+      });
+
+      if (response.ok) {
+        // Assuming the response is a file, you can handle it as needed
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        setGraphUrl(url);
+        setShowModal(true);
+      } else {
+        const data = await response.json();
+        console.error(data.message);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const closeModal = () => {
+    setGraphUrl(null);
+    setShowModal(false);
+  };
+
   const renderTable = (data, title) => {
     const startIndex = (currentPage - 1) * samplesPerPage;
     const endIndex = startIndex + samplesPerPage;
+
+    const totalPages = Math.ceil(data.length / samplesPerPage);
+
+    const paginatedData = data.slice(startIndex, endIndex);
 
     return (
       <div className="table-box">
@@ -69,7 +105,7 @@ function CheckOverlappingRegions() {
               </tr>
             </thead>
             <tbody>
-              {data.slice(startIndex, endIndex).map((item, index) => (
+              {paginatedData.map((item, index) => (
                 <tr key={index}>
                   <td>{item.collection_name}</td>
                   <td>{item.Position}</td>
@@ -104,6 +140,17 @@ function CheckOverlappingRegions() {
             </tbody>
           </table>
         </div>
+        {totalPages > 1 && (
+          <div className="pagination-controls">
+            <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
+              Previous
+            </button>
+            <span>{`Page ${currentPage} of ${totalPages}`}</span>
+            <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
+              Next
+            </button>
+          </div>
+        )}
       </div>
     );
   };
@@ -188,7 +235,6 @@ function CheckOverlappingRegions() {
           Duplication/Deletion:
           <input type="text" value={duplicationDeletion} onChange={(e) => setDuplicationDeletion(e.target.value)} />
         </label>
-
         <button type="submit">Submit</button>
       </form>
 
@@ -209,12 +255,26 @@ function CheckOverlappingRegions() {
             Download Excel
           </button>
 
+          {/* Add a button to generate graph */}
+          <button className="generate-graph-button" onClick={handleGenerateGraph}>
+            View Graph
+          </button>
+
           {/* Add pagination controls... */}
 
           {/* New button to get matched data */}
           <button className="get-matched-data-button" onClick={handleGetMatchedData}>
-            Get Matched Data
+            Get All
           </button>
+        </div>
+      )}
+
+      {showModal && (
+        <div className="modal">
+          <div className="modal-content">
+            <span className="close" onClick={closeModal}>&times;</span>
+            <img src={graphUrl} alt="Graph" />
+          </div>
         </div>
       )}
     </div>

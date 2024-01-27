@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import './UploadFiles.css';
 
-
 const CollectionList = () => {
     const [collections, setCollections] = useState([]);
     const [selectedCollection, setSelectedCollection] = useState(null);
@@ -90,12 +89,16 @@ const CollectionList = () => {
     return (
         <div>
             <h1>Database Collections</h1>
-            <button onClick={handleViewCollections}>
-                {showCollections ? 'Hide Collections' : 'View Collections'}
-            </button>
+
+            {/* Delete button always visible */}
             <button onClick={handleDeleteCollection} disabled={!selectedCollection}>
                 Delete Selected Collection
             </button>
+
+            <button onClick={handleViewCollections}>
+                {showCollections ? 'Hide Collections' : 'View Collections'}
+            </button>
+
             {deleteConfirmation && (
                 <div>
                     <p>Are you sure you want to delete the collection "{selectedCollection}"?</p>
@@ -103,6 +106,7 @@ const CollectionList = () => {
                     <button onClick={cancelDelete}>No</button>
                 </div>
             )}
+
             <button onClick={handleAddFile}>Add File</button>
 
             {/* Hidden file input triggered by the Add File button */}

@@ -1,10 +1,13 @@
+from io import BytesIO
 import json
-from flask import Flask, request, jsonify
+from bson import ObjectId
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import pandas as pd
 from pymongo import MongoClient
 import os
 import shutil
+import plotly.graph_objs as go
 
 app = Flask(__name__)
 CORS(app)
@@ -255,7 +258,7 @@ def delete_collection():
         # Delete the collection
         db2[collection_name].drop()
 
-        return jsonify({'message': f'Collection {collection_name} deleted successfully'}), 200
+        return jsonify({'messa</div>ge': f'Collection {collection_name} deleted successfully'}), 200
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -319,43 +322,141 @@ def get_matched_data():
 
     return jsonify(matched_data)
 
+class JSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, ObjectId):
+            return str(o)
+        return super().default(o)
+
+
+@app.route('/get_matched_data_graph', methods=['POST'])
+def get_matched_data_graph():
+    data = request.get_json()
+    A, B, C, E = int(data.get('start', 0)), int(data.get('end', 0)), data.get('chromosome', ''), data.get('duplication_deletion', '')
+
+    traces = []  # Initialize traces list
+
+    for collection_name in db.list_collection_names():
+        collection = db[collection_name]
+
+        for document in collection.find():
+            position = int(document.get("Position", 0))
+            end = int(document.get("INFO", {}).get("END", 0))
+            alt = str(document.get("ALT", ""))
+            chr_value = str(document.get("Chromosome", ""))
+
+            # Example conditions, adjust as needed
+            if A == position and B == end and C == chr_value:
+                traces.append((position, end, collection_name, alt))
+
+            elif A <= position <= B and C == chr_value:
+                traces.append((position, end, collection_name, alt))
+
+            elif A < position and B > end and C == chr_value:
+                traces.append((position, end, collection_name, alt))
+
+            # Add more conditions based on your requirements...
+
+    if traces:
+        graph_data = create_graph(traces)  # Pass traces to create_graph function
+        graph_image = plot_to_image(graph_data)
+        return send_file(graph_image, mimetype='image/png', as_attachment=True, download_name='graph.png')
+    else:
+        return jsonify({"message": "No matched documents for graph"})
+
+def create_graph(traces):
+    data = []  # Initialize data list
+    y_values = []  # Store unique y values for each collection name
+
+    for i, (position, end, collection_name, alt) in enumerate(traces):
+        # Use the collection name as the y value
+        y_value = f'{i + 1}. {collection_name}'
+        if y_value not in y_values:
+            y_values.append(y_value)
+
+        # Determine line color based on alt value
+        line_color = 'blue' if alt == '<DUP>' else 'red'
+
+        # Create a horizontal line (bar) for each entry
+        trace = go.Scatter(
+            x=[position, end],
+            y=[i + 1, i + 1],  # Use the index as the y value
+            mode='lines',  # Display as a line without text
+            line=dict(color=line_color, width=5),  # Adjust color and width as needed
+            hoverinfo='text',
+            text=f'Collection: {collection_name}<br>Position: {position}<br>End: {end}<br>Alt: {alt}',
+            name=f'Sleeping Line: {position} to {end}',
+        )
+
+        data.append(trace)
+
+    # Find the minimum and maximum values for position and end
+    min_position = min(trace[0] for trace in traces)
+    max_end = max(trace[1] for trace in traces)
+
+    # Extend the x-axis range by adding extra space
+    xaxis_range = [min_position - 1000, max_end + 1000]
+
+    # Dynamically set the height of the graph based on the number of traces
+    graph_height = max(300, len(traces) * 40)  # Minimum height of 300, increase as needed
+
+    layout = go.Layout(
+        title='CNV Visualiser',
+        xaxis=dict(title='Position to End Range', range=xaxis_range),
+        yaxis=dict(title='Collection', tickvals=list(range(1, len(y_values) + 1)), ticktext=y_values),
+        showlegend=False,  # Do not display legend for individual lines
+        hovermode='closest',  # Display hover information for the closest point
+        height=graph_height,  # Set the height dynamically
+        margin=dict(l=50, r=50, b=50, t=50),  # Adjust margins as needed
+    )
+
+    graph_data = {'data': data, 'layout': layout}
+    return graph_data
+
+
+def plot_to_image(graph_data):
+    # Convert plotly graph data to an image
+    img_bytes = BytesIO()
+    fig = go.Figure(graph_data)
+    fig.write_image(img_bytes, format='png')
+    img_bytes.seek(0)
+    return img_bytes
+
+
+
 @app.route('/check_overlappingL', methods=['POST'])
 def check_overlapping():
     try:
-        user_input = request.json.get('input_data')
+        user_input = request.json.get('input_data').strip()  # Strip whitespaces from user_input
         total_matched_documents = 0
-        result_data = []
+        matched_data = []
 
         for collection_name in db2.list_collection_names():
             collection = db2[collection_name]
 
-            # Query the collection for documents matching the user input in the 'Region' field
-            query = {"Region": user_input}
-            matching_documents = collection.find(query)
-
-            # Collect matching documents and display the number of matched documents for the current collection
-            num_matched_documents = 0
-            for document in matching_documents:
-                num_matched_documents += 1
-                total_matched_documents += 1
-                document_data = {
-                    'collection_name': collection_name,
-                    'document': document
-                }
-                result_data.append(document_data)
-
-            # Add the number of matched documents for the current collection to the result data
-            result_data[-1]['num_matched_documents'] = num_matched_documents
+            for document in collection.find():
+                loh_info = document.get('LoH Info', {})
+                region = loh_info.get('Region', '').strip()  # Access nested Region field and strip whitespaces
+                if region == user_input:
+                    total_matched_documents += 1
+                    document_id = str(document.pop('_id', None))
+                    row_data = {
+                        "document_id": document_id,
+                        "collection_name": collection_name,
+                    }
+                    row_data.update({f"{key}": value for key, value in document.items()})
+                    matched_data.append(row_data)
 
         # Add the total number of matched documents across all collections to the result data
-        result_data.append({'total_matched_documents': total_matched_documents})
+        result_data = {
+            'matched_data': matched_data,
+            'total_matched_documents': total_matched_documents
+        }
 
         return jsonify(result_data), 200
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-
 
 
 if __name__ == '__main__':
