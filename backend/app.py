@@ -11,6 +11,7 @@ import plotly.graph_objs as go
 
 app = Flask(__name__)
 CORS(app)
+
 client = MongoClient('mongodb://localhost:27017/')
 db = client['test7']
 
@@ -22,7 +23,20 @@ TEMP_FOLDER = 'tmp'
 if not os.path.exists(TEMP_FOLDER):
     os.makedirs(TEMP_FOLDER)
 
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.json.get('username')
+    password = request.json.get('password')
 
+    # Dummy login logic for testing
+    if username == 'gautham' and password == 'gautham@123':
+        print('Login successful for user:', username)
+        return jsonify({'message': 'Login successful'}), 200
+    else:
+        print('Login failed for user:', username)
+        return jsonify({'message': 'Invalid credentials'}), 401
+
+    
 @app.route('/get_collections', methods=['GET'])
 def get_collections():
     collections = db.list_collection_names()
@@ -460,4 +474,4 @@ def check_overlapping():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True,port=5000)
