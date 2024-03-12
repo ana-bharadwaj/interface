@@ -1,0 +1,97 @@
+/* Set the background image */
+body {
+    background-image: url('C:/Users/Nimbella/APIConnection/my-react-app/src/background.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Ensure the background covers the entire viewport */
+    margin: 0;
+    font-family: 'Arial', sans-serif; /* Use a commonly used font for better compatibility */
+}
+
+/* Style for the form container */
+.form-container {
+    width: 300px; /* Adjusted box size */
+    padding: 40px;
+    border-radius: 30px; /* Increased border radius for a rounder look */
+    background: linear-gradient(to right, #add2e1, #f0f0f0); /* Use a subtle gradient for background */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: all 0.3s ease; /* Smooth transition for hover effect */
+}
+
+/* Hover effect for form container */
+.form-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Style for input fields */
+.input-field {
+    width: 100%;
+    height: 40px;
+    margin-bottom: 20px; /* Added space between login and password fields */
+    padding: 10px;
+    border-radius: 20px; /* Use rounded borders for input fields */
+    border: 1px solid #ccc;
+    background-color: #f9f9f9; /* Light gray background color */
+    font-size: 16px;
+}
+
+/* Style for password container */
+.password-container {
+    position: relative;
+    margin-top: 5%;
+}
+
+/* Style for password input */
+.password-input {
+    width: calc(100% - 40px);
+    height: 40px;
+    padding: 10px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    font-size: 16px;
+}
+
+/* Style for toggle password button */
+.toggle-password {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    font-size: 14px;
+    color: #888;
+}
+
+/* Hover style for toggle password button */
+.toggle-password:hover {
+    color: #555;
+}
+
+/* Style for login button */
+.login-button {
+    width: 100%;
+    height: 40px;
+    border: none;
+    border-radius: 20px;
+    background-color: #4CAF50; /* Green background color */
+    color: white;
+    margin-top: 5%;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease; /* Smooth transition for hover effect */
+}
+
+/* Hover effect for login button */
+.login-button:hover {
+    background-color: #45a049; /* Darker green color on hover */
+}

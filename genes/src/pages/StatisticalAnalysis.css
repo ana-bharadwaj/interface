@@ -1,29 +1,53 @@
-.App {
-    text-align: center;
-  }
-  
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-    height: 80px;
-  }
-  
-  .App-header {
-    background-color: #222;
-    height: 150px;
-    padding: 20px;
-    color: white;
-  }
-  
-  .App-title {
-    font-size: 1.5em;
-  }
-  
-  .App-intro {
-    font-size: large;
-  }
-  
-  @keyframes App-logo-spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-  
+.app-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+.heading {
+  margin-bottom: 10px;
+}
+
+.count-container {
+  text-align: center;
+  margin-bottom: 20px;
+
+}
+
+.graph-container {
+  align-self: flex-start; /* Align to the left */
+}
+
+.graph-container select {
+  margin-bottom: 10px;
+}
+.scrollable-box {
+  max-height: 200px; /* Maximum height of the box */
+  overflow-y: auto; /* Enable vertical scrolling */
+  border: 1px solid #ccc; /* Border styling */
+  border-radius: 5px;
+  max-width: 500px; /* Rounded corners */
+}
+
+.scrollable-box ul {
+  padding: 0; /* Remove default padding */
+  margin: 0; /* Remove default margin */
+}
+
+.scrollable-box ul li {
+  list-style: none; /* Remove default list styling */
+  padding: 5px 10px; /* Padding around each collection name */
+  border-bottom: 1px solid #ccc; /* Border bottom for each collection */
+}
+
+.scrollable-box ul li:last-child {
+  border-bottom: none; /* Remove border bottom for last collection */
+}
+
+.content-container {
+  display: flex;
+  flex-direction: row;
+}
+
+

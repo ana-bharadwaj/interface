@@ -10,7 +10,7 @@ function CheckOverlappingRegionsL() {
     e.preventDefault();
 
     try {
-      const response = await fetch('http://localhost:5000/check_overlappingL', {
+      const response = await fetch('http://10.11.30.239:5000/check_overlappingL', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import './CheckOverlappingRegions.css';
 import * as XLSX from 'xlsx';
+import './CheckOverlappingRegions.css';
 
 function CheckOverlappingRegions() {
   const [start, setStart] = useState('');
@@ -31,7 +31,7 @@ function CheckOverlappingRegions() {
     e.preventDefault();
 
     try {
-      const response = await fetch('http://localhost:5000/process_data', {
+      const response = await fetch('http://10.11.30.239:5000/process_data', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -52,7 +52,7 @@ function CheckOverlappingRegions() {
 
   const handleGenerateGraph = async () => {
     try {
-      const response = await fetch('http://localhost:5000/get_matched_data_graph', {
+      const response = await fetch('http://10.11.30.239:5000/get_matched_data_graph', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -108,12 +108,17 @@ function CheckOverlappingRegions() {
               {paginatedData.map((item, index) => (
                 <tr key={index}>
                   <td>{item.collection_name}</td>
-                  <td>{item.Position}</td>
+                  <td>
+                    {item.Position}
+                    {item.INFO && item.INFO.span && (
+                      <span className="info-span">{item.INFO.span}</span>
+                    )}
+                  </td>
                   {Object.entries(item)
-                    .filter(([key]) => key !== 'collection_name' && key !== 'Position')
+                    .filter(([key]) => key !== 'collection_name' && key !== 'Position' && key !== 'INFO')
                     .map(([key, value]) => (
                       <td key={key}>
-                        {key === 'FORMAT' || key === 'INFO' ? (
+                        {key === 'FORMAT' ? (
                           <table>
                             <thead>
                               <tr>
@@ -161,7 +166,7 @@ function CheckOverlappingRegions() {
 
   const handleDownload = async () => {
     try {
-      const response = await fetch('http://localhost:5000/process_data', {
+      const response = await fetch('http://10.11.30.239:5000/process_data', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -189,7 +194,7 @@ function CheckOverlappingRegions() {
 
   const handleGetMatchedData = async () => {
     try {
-      const response = await fetch('http://localhost:5000/get_matched_data', {
+      const response = await fetch('http://10.11.30.239:5000/get_matched_data', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

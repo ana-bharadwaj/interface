@@ -1,3 +1,5 @@
+from collections import OrderedDict
+import gzip
 from io import BytesIO
 import json
 from bson import ObjectId
@@ -11,16 +13,30 @@ import plotly.graph_objs as go
 
 app = Flask(__name__)
 CORS(app)
-client = MongoClient('mongodb://localhost:27017/')
+
+client = MongoClient('mongodb://10.11.30.239:27017/')
 db = client['test7']
 
-client2= MongoClient('mongodb://localhost:27017')
+client2= MongoClient('mongodb://10.11.30.239:27017')
 db2 =client2['LOH']
 
 # Create a temporary folde if it doesn't exist
 TEMP_FOLDER = 'tmp'
 if not os.path.exists(TEMP_FOLDER):
     os.makedirs(TEMP_FOLDER)
+
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.json.get('username')
+    password = request.json.get('password')
+
+    # Dummy login logic for testing
+    if username == 'gautham' and password == 'gautham@123':
+        print('Login successful for user:', username)
+        return jsonify({'message': 'Login successful'}), 200
+    else:
+        print('Login failed for user:', username)
+        return jsonify({'message': 'Invalid credentials'}), 401
 
 
 @app.route('/get_collections', methods=['GET'])
@@ -45,18 +61,58 @@ def add_file():
         for file in files:
             # Check if the file is a directory
             if os.path.isdir(file.filename):
-                # Create a collection for each file within the directory
-                parse_through(file)
+                # Parse through the directory and process files
+                parse_through(file.filename)
             else:
-                # Create a collection for the individual file
-                collection_name = os.path.splitext(file.filename)[0]
-                user_collection = db[collection_name]
-                process_and_insert_vcf(file, user_collection)
+                # Process individual files
+                process_file(file)
 
         return jsonify({'message': 'Files added to the database successfully.'})
     else:
         return jsonify({'error': 'No files received'})
-    
+
+
+
+def process_file(file):
+    if file.filename.endswith('.gz'):
+        try:
+            # Extract the gzipped file
+            extracted_vcf_file = extract_vcf_from_gz(file)
+            if extracted_vcf_file:
+                # Create a collection for the extracted VCF file
+                collection_name = os.path.splitext(os.path.splitext(file.filename)[0])[0]
+                user_collection = db[collection_name]
+                process_and_insert_vcf(extracted_vcf_file, user_collection)
+            else:
+                return jsonify({'error': 'Failed to extract VCF file from gzipped file.'}), 400
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    else:
+        # Create a collection for the individual file
+        collection_name = os.path.splitext(file.filename)[0]
+        user_collection = db[collection_name]
+        process_and_insert_vcf(file, user_collection)
+
+def extract_vcf_from_gz(gzipped_file):
+    try:
+        # Create a temporary directory to extract the file
+        temp_dir = 'temp'
+        os.makedirs(temp_dir, exist_ok=True)
+
+        # Specify the full path for the extracted VCF file
+        extracted_vcf_file_path = os.path.join(temp_dir, os.path.splitext(gzipped_file.filename)[0])
+
+        # Decompress the gzipped file
+        with gzip.open(gzipped_file, 'rb') as f_in:
+            with open(extracted_vcf_file_path, 'wb') as f_out:
+                shutil.copyfileobj(f_in, f_out)
+
+        return open(extracted_vcf_file_path, 'rb')
+    except Exception as e:
+        raise Exception('Failed to extract VCF file from gzipped file.') from e
+
+
+
 def create_values_set(json_filename):
     with open(json_filename, 'r') as json_file:
         json_data = json.load(json_file)
@@ -73,7 +129,7 @@ def process_data():
         data = request.json
         A, B, C, E = int(data.get('start', 0)), int(data.get('end', 0)), data.get('chromosome', ''), data.get('duplication_deletion', '')
 
-        values_set = create_values_set('/home/humangenetics/apps/Interface/backend/output.json')
+        values_set = create_values_set('/DATA/IHDB_CNV/interface/backend/output.json')
 
         collections = db.list_collection_names()
 
@@ -130,7 +186,7 @@ def process_data():
 
                             if collection_name not in matching_documents:
                                 total_match += 1
-                        
+
 
 
         response_data = {
@@ -268,7 +324,7 @@ def delete_collection():
 def get_matched_data():
     data = request.get_json()
     A, B, C, E = int(data.get('start', 0)), int(data.get('end', 0)), data.get('chromosome', ''), data.get('duplication_deletion', '')
-   
+
 
     matched_data = []
 
@@ -289,7 +345,7 @@ def get_matched_data():
                             }
                 row_data.update({f"{key}": value for key, value in document.items()})
                 matched_data.append(row_data)
-            
+
             elif A >= position and B  is not None and end is not None and B <= end and C == chr:
                 row_data = {
                                 "document_id": str(document.pop('_id', None)),
@@ -318,7 +374,7 @@ def get_matched_data():
                             }
                 row_data.update({f"{key}": value for key, value in document.items()})
                 matched_data.append(row_data)
-     
+
 
     return jsonify(matched_data)
 
@@ -459,5 +515,172 @@ def check_overlapping():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/count_collections', methods=['GET'])
+def count_collections():
+    collections = db.list_collection_names()
+    count = len(collections)
+    return jsonify({'count': count})
+
+@app.route('/list_collections', methods=['GET'])
+def list_collections():
+    collections = db.list_collection_names()
+    return jsonify({'collections': collections})
+
+@app.route('/count_del_dup', methods=['GET'])
+def count_del_dup():
+    selected_collection = request.args.get('collection')
+    if selected_collection and selected_collection != 'All':
+        collection = db[selected_collection]
+        del_count = collection.count_documents({'ALT': '<DEL>'})
+        dup_count = collection.count_documents({'ALT': '<DUP>'})
+    else:
+        del_count = 0
+        dup_count = 0
+        for collection_name in db.list_collection_names():
+            collection = db[collection_name]
+            del_count += collection.count_documents({'ALT': '<DEL>'})
+            dup_count += collection.count_documents({'ALT': '<DUP>'})
+    return jsonify({'delCount': del_count, 'dupCount': dup_count})
+
+@app.route('/count_classification', methods=['GET'])
+def count_classification():
+    try:
+        collection_name = request.args.get('collection')
+        count_vus = 0
+        count_benign = 0
+        count_likely_benign = 0
+        count_likely_pathogenic = 0
+        count_pathogenic = 0
+
+        if collection_name and collection_name != 'All':
+            count_vus = db[collection_name].count_documents({"FORMAT.Classification": "VUS"})
+            count_benign = db[collection_name].count_documents({"FORMAT.Classification": "Benign"})
+            count_likely_benign = db[collection_name].count_documents({"FORMAT.Classification": "Likely Benign"})
+            count_likely_pathogenic = db[collection_name].count_documents({"FORMAT.Classification": "Likely Pathogenic"})
+            count_pathogenic = db[collection_name].count_documents({"FORMAT.Classification": "Pathogenic"})
+        else:
+            count_vus = 0
+            count_benign = 0
+            count_likely_benign = 0
+            count_likely_pathogenic = 0
+            count_pathogenic = 0
+            for collection in db.list_collection_names():
+                count_vus += db[collection].count_documents({"FORMAT.Classification": "VUS"})
+                count_benign += db[collection].count_documents({"FORMAT.Classification": "Benign"})
+                count_likely_benign += db[collection].count_documents({"FORMAT.Classification": "Likely Benign"})
+                count_likely_pathogenic += db[collection].count_documents({"FORMAT.Classification": "Likely Pathogenic"})
+                count_pathogenic += db[collection].count_documents({"FORMAT.Classification": "Pathogenic"})
+
+        return jsonify({'vusCount': count_vus, 'benignCount': count_benign, 'likelyBenignCount': count_likely_benign,
+                        'likelyPathogenic': count_likely_pathogenic, 'pathogenic': count_pathogenic})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/count_collections_in_region', methods=['GET'])
+def count_collections_in_region():
+    try:
+        min_region = float(request.args.get('minRegion'))
+        max_region = float(request.args.get('maxRegion'))
+
+        count = 0
+        for collection_name in db.list_collection_names():
+            collection = db[collection_name]
+            for document in collection.find():
+                format_data = document.get("FORMAT", {})
+                avg_z_score = format_data.get("AvgZScore", None)
+                if avg_z_score is not None and min_region <= avg_z_score <= max_region:
+                    count += 1
+
+        return jsonify({'count': count})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/adjust_values', methods=['POST'])
+def adjust_values():
+    data = request.json
+    min_value = max(-10, data['min'])
+    max_value = min(10, data['max'])
+
+    total_count = 0
+    collections_with_data = []
+
+    # Iterate through all collections
+    for collection_name in db.list_collection_names():
+        collection = db[collection_name]
+        collection_has_data = False
+        # Iterate through all documents in the collection
+        for document in collection.find({}):
+            avg_zscore = float(document.get('FORMAT', {}).get('AvgZScore'))
+            if avg_zscore is not None and min_value <= avg_zscore <= max_value:
+                collection_has_data = True
+                break  # Break out of the loop if at least one document satisfies the condition
+        if collection_has_data:
+            total_count += 1
+            collections_with_data.append(collection_name)
+
+    return jsonify({'count': total_count, 'collections_with_data': collections_with_data})
+
+@app.route('/adjust_span', methods=['POST'])
+def adjust_span():
+    data = request.json
+    min_value = max(-50000, data['min'])
+    max_value = min(50000, data['max'])
+
+    total_count_span = 0
+    collections_with_data_span = []
+
+    # Iterate through all collections
+    for collection_name in db.list_collection_names():
+        collection = db[collection_name]
+        collection_has_data = False
+        # Iterate through all documents in the collection
+        for document in collection.find({}):
+            span = float(document.get('INFO', {}).get('Span'))
+            if span is not None and min_value <= span <= max_value:
+                collection_has_data = True
+                break  # Break out of the loop if at least one document satisfies the condition
+        if collection_has_data:
+            total_count_span += 1
+            collections_with_data_span.append(collection_name)
+
+    return jsonify({'countspan': total_count_span, 'collections_with_data_span': collections_with_data_span})
+
+
+@app.route('/get_data_for_excel', methods=['GET'])
+def get_data_for_excel():
+    collection_names = db.list_collection_names()
+    data = []
+
+    for collection_name in collection_names:
+        collection = db[collection_name]
+        documents = collection.find()
+
+        for document in documents:
+            info = document.get('INFO', {})
+            format = document.get('FORMAT', {})
+
+            row = OrderedDict([
+            ('Chromosome', document.get('Chromosome')),
+            ('Start', document.get('Position')),
+            ('Stop', info.get('END')),
+            ('Type', info.get('Type')),
+            ('Sample Name', collection_name),
+            ('CNV State', format.get('CNVState')),
+            ('Flags', format.get('Flags2')),
+            ('Avg Target Mean Depth', format.get('AvgTargetMeanDepth')),
+            ('Avg Z Score', format.get('AvgZScore')),
+            ('Avg Ratio', format.get('AvgRatio')),
+            ('P-Value', format.get('pvalue')),
+            ('Karyotype', format.get('Karyotype'))
+            ])
+
+
+            data.append(row)
+
+    return jsonify(data)
+
+
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='10.11.30.239',port=5000)
